@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="guat.lxy.mapper.AdminMapper">
+
+    <!--
+        管理员全站文章统计
+        和公开列表（ArticleMapper.countArticleByCondition）的区别：
+        公开列表强制 status = 1（只看已发布），管理员不限制 status，草稿/已发布全部可见
+    -->
+    <select id="countAllArticle" parameterType="guat.lxy.pojo.dto.ArticlePageQueryDTO" resultType="long">
+        SELECT COUNT(*) FROM article
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="author != null and author != ''">
+                AND author = #{author}
+            </if>
+        </where>
+    </select>
+
+    <!--
+        管理员全站文章分页列表
+        管理后台需要看到正文（审核/编辑场景），所以查出 content 全文；
+        公开列表（ArticleMapper.selectArticlePage）刻意不查 content 省带宽，两者场景不同
+    -->
+    <select id="selectAllArticlePage" parameterType="guat.lxy.pojo.dto.ArticlePageQueryDTO" resultType="guat.lxy.pojo.entity.Article">
+        SELECT
+        id, title, content,
+        author, create_time, update_time, status
+        FROM article
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="author != null and author != ''">
+                AND author = #{author}
+            </if>
+        </where>
+        ORDER BY
+        <!-- 排序字段白名单：只允许 createTime / updateTime，防 SQL 注入 -->
+        <choose>
+            <when test="sortBy == 'updateTime'"> update_time </when>
+            <otherwise> create_time </otherwise>
+        </choose>
+        <choose>
+            <when test="sortOrder == 'asc'"> ASC </when>
+            <otherwise> DESC </otherwise>
+        </choose>
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+</mapper>

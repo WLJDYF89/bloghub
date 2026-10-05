@@ -1,0 +1,647 @@
+/* finesse · register=product · A=warm-ink+paper · B=400/600 · C=sidebar-shell
+ * D=no-engine(feedback-only) · E=paper-press · SOUL=6 SPECTACLE=1 DENSITY=7 */
+
+/* ============================================================
+   BlogHub · 设计底座
+   深墨侧栏 / 暖白纸面。所有 token 只在这里定义一次。
+   ============================================================ */
+
+:root {
+  /* ---- 暖墨（侧栏、主按钮、正文最重的一层） ---- */
+  --ink-900: #17140e;
+  --ink-800: #211d16;
+  --ink-700: #2e2820;
+  --ink-600: #40393056;
+  --on-ink: rgba(247, 245, 241, 0.94);
+  --on-ink-2: rgba(247, 245, 241, 0.62);
+  --on-ink-3: rgba(247, 245, 241, 0.38);
+  --on-ink-line: rgba(247, 245, 241, 0.1);
+  --on-ink-fill: rgba(247, 245, 241, 0.055);
+
+  /* ---- 暖白纸面 ---- */
+  --bg: #f6f4ef;
+  --surface: #fdfcf9;
+  --surface-2: #f1eee7;
+  --surface-3: #e8e4db;
+
+  /* ---- 发丝线（暖中性，永远不是硬灰） ---- */
+  --line: rgba(28, 25, 18, 0.1);
+  --line-2: rgba(28, 25, 18, 0.065);
+  --line-strong: rgba(28, 25, 18, 0.17);
+
+  /* ---- 文字 ---- */
+  --text: #1b1815;
+  --text-2: #57534a;
+  --text-3: #8b857a;
+  --text-4: #a9a396;
+
+  /* ---- 唯一强调色：焦橙。只出现在链接 / 焦点 / 该动手的那句话上 ---- */
+  --accent: #c4621f;
+  --accent-hover: #a8511a;
+  --accent-ink: #8f4413;
+  --accent-soft: rgba(196, 98, 31, 0.1);
+  --accent-line: rgba(196, 98, 31, 0.28);
+
+  /* ---- 语义色：仅用于删除确认与错误横幅，不做品牌用 ---- */
+  --danger: #a8342a;
+  --danger-hover: #8f2b22;
+  --danger-soft: rgba(168, 52, 42, 0.09);
+  --danger-line: rgba(168, 52, 42, 0.24);
+
+  /* ---- 圆角：克制。没有 24px 药丸 ---- */
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r: 7px;
+  --r-lg: 11px;
+  --r-xl: 16px;
+
+  /* ---- 投影：暖调、极浅，靠亮度差分 + 发丝线分层 ---- */
+  --shadow-1: 0 1px 2px rgba(28, 25, 18, 0.05);
+  --shadow-2: 0 2px 4px rgba(28, 25, 18, 0.045), 0 10px 24px -12px rgba(28, 25, 18, 0.16);
+  --shadow-3: 0 3px 8px rgba(28, 25, 18, 0.06), 0 20px 44px -18px rgba(28, 25, 18, 0.24);
+  --shadow-ink: 0 1px 2px rgba(23, 20, 14, 0.24);
+
+  /* ---- 字体 ---- */
+  --font-sans:
+    'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---- 骨架尺寸 ---- */
+  --nav-h: 56px;
+  --sidebar-w: 236px;
+  --sidebar-w-min: 64px;
+  --content-max: 1180px;
+
+  /* ---- 层级 ---- */
+  --z-sticky: 30;
+  --z-nav: 40;
+  --z-overlay: 60;
+  --z-modal: 70;
+  --z-toast: 90;
+
+  /* ---- 动效：只做反馈，不做装饰 ---- */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t-fast: 120ms;
+  --t: 180ms;
+}
+
+/* ============================================================
+   Reset
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  /* M1：clip 而不是 hidden —— hidden 会造出滚动容器并静默杀死 sticky 后代 */
+  overflow-x: clip;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* 常驻滚动条槽：文章列表变长/变短（切分类、进详情页）时，
+     滚动条的出现与否不再改变视口宽度，居中内容也就不会左右偏移。 */
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+}
+
+#app {
+  min-height: 100dvh;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* ============================================================
+   排版尺度
+   ============================================================ */
+
+.t-display {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.t-h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+}
+
+.t-h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.t-h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.t-body {
+  font-size: 16px;
+}
+
+.t-sm {
+  font-size: 15px;
+}
+
+.t-xs {
+  font-size: 13px;
+}
+
+.t-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+
+.c-2 {
+  color: var(--text-2);
+}
+.c-3 {
+  color: var(--text-3);
+}
+.c-accent {
+  color: var(--accent);
+}
+
+/* 数字：永远等宽对齐 */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   对外壳：侧栏 + 主区
+   ============================================================ */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  min-height: 100dvh;
+  transition: grid-template-columns var(--t) var(--ease);
+}
+
+.shell.is-collapsed {
+  grid-template-columns: var(--sidebar-w-min) minmax(0, 1fr);
+}
+
+/* ---- 侧栏 ---- */
+
+.rail {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  /* 偏白的液态玻璃：半透明白底 + 斜向高光 + 发丝线收边 */
+  background-color: rgba(253, 252, 249, 0.72);
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.34) 44%,
+    rgba(255, 255, 255, 0.62)
+  );
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  border-right: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rail__head {
+  height: var(--nav-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* 品牌图标容器：尺寸仍由这里决定（侧栏里是 30px），
+   但底色/圆角/颜色交给 BrandMark 里的 mark.svg 自己带，
+   这里再加背景就成了双重底色。 */
+.rail__mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.rail__wordmark {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rail__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.rail__sub {
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.rail__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rail__group {
+  padding: 0 8px;
+  margin: 16px 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.rail__group:first-child {
+  margin-top: 0;
+}
+
+.rail__item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 38px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: 16px;
+  font-weight: 400;
+  white-space: nowrap;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
+}
+
+.rail__item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail__item.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+.rail__item svg {
+  flex: none;
+  opacity: 0.85;
+}
+
+.rail__item.is-active svg {
+  opacity: 1;
+}
+
+.rail__dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: auto;
+}
+
+.rail__foot {
+  flex: none;
+  border-top: 1px solid var(--line);
+  padding: 10px;
+}
+
+.rail__user {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  min-width: 0;
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+.rail__user:hover {
+  background: var(--surface-2);
+}
+
+.rail__user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rail__user-name {
+  font-size: 15px;
+  line-height: 1.25;
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rail__user-role {
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+/* 折叠态：只留图标 */
+.shell.is-collapsed .rail__wordmark,
+.shell.is-collapsed .rail__group,
+.shell.is-collapsed .rail__item span,
+.shell.is-collapsed .rail__user-meta,
+.shell.is-collapsed .rail__dot {
+  display: none;
+}
+
+.shell.is-collapsed .rail__head,
+.shell.is-collapsed .rail__user {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.shell.is-collapsed .rail__item {
+  justify-content: center;
+  padding: 0;
+}
+
+/* ---- 主区 ---- */
+
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  height: var(--nav-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 24px;
+  background: rgba(253, 252, 249, 0.86);
+  backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar__title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.topbar__crumb {
+  font-size: 13px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.topbar__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.page {
+  flex: 1;
+  padding: 28px 24px 72px;
+}
+
+.page__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.page--narrow .page__inner {
+  max-width: 760px;
+}
+
+.page__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.page__head-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.page__title {
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.page__desc {
+  margin-top: 5px;
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 62ch;
+}
+
+.page__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* ============================================================
+   通用排布
+   ============================================================ */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+.gap-1 {
+  gap: 4px;
+}
+.gap-2 {
+  gap: 8px;
+}
+.gap-3 {
+  gap: 12px;
+}
+.gap-4 {
+  gap: 16px;
+}
+.gap-5 {
+  gap: 24px;
+}
+.gap-6 {
+  gap: 32px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+.row--between {
+  justify-content: space-between;
+}
+.wrap {
+  flex-wrap: wrap;
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.grid-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+
+/* ============================================================
+   滚动条：细、暖、不抢视线
+   ============================================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 10px;
+}
+
+.rail *::-webkit-scrollbar-thumb {
+  background: rgba(28, 25, 18, 0.16);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* ============================================================
+   降级动效
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

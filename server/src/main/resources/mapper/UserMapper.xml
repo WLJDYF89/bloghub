@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="guat.lxy.mapper.UserMapper">
+
+    <!--
+        说明：UserMapper 目前使用注解方式写 SQL（getByUsername、insertUser），
+        这个 XML 文件暂时留空，未来如果有复杂动态 SQL（如条件更新、分页查询）再在这里补。
+        为避免和注解方式的列名/方法名不一致造成「有时能用有时不能用」的迷惑，
+        所有列名保持和注解一致：username、nickname（数据库实际列名）。
+    -->
+
+</mapper>

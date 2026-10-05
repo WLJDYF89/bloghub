@@ -1,0 +1,62 @@
+# ============================================================
+# BlogHub 根目录 .gitignore
+# 各子项目（front_end / ai）另有自己的 .gitignore，这里只兜底全仓库通用规则
+# ============================================================
+
+# ---------- 依赖 / 构建产物 ----------
+node_modules/
+dist/
+dist-ssr/
+coverage/
+target/
+*.class
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# ---------- 环境变量 / 密钥（绝不提交） ----------
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ---------- 日志 / 崩溃转储 ----------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+hs_err_pid*.log
+replay_pid*.log
+
+# ---------- 编辑器 / IDE ----------
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ---------- 操作系统 ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 本地临时工作区 / 验证产物（工具生成，不入库） ----------
+.workbench/
+.verify-front/
+.verify-diff/
+.verify-bcrypt/
+.acl-recovery/
+
+# ---------- 其它缓存 ----------
+*.local
+*.tsbuildinfo
+.eslintcache
+*.timestamp-*-*.mjs

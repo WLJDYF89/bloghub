@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="guat.lxy.mapper.ArticleMapper">
+
+    <!--
+        动态更新文章
+        只允许修改 title / content / category_id / status
+        id 用于 WHERE 条件（必填）
+        author / createTime / updateTime 不允许修改；
+        update_time 显式写 NOW()，不依赖列的 ON UPDATE CURRENT_TIMESTAMP 定义
+
+        ── 「只更新真正变化的字段」由调用方（Service）保证 ──────────────────
+        Service 会先取出库里的现行值逐字段比对，只把确实不同的字段塞进这个实体，
+        所以这里可以简单地「字段非 null 就写」。这样带来的两个结果：
+
+        1. 没有任何字段变化时，Service 根本不会调用本语句，update_time 自然不变
+           ——「打开编辑器一个字没改直接保存」不会再顶掉更新时间；
+        2. update_time 只在真的有字段被改动时才会被 NOW() 覆盖。
+
+        title / content 的条件是 `!= null` 而不是 `!= ''`：
+        允许把标题或正文清空（清空是有效改动，旧写法会静默忽略）。
+    -->
+    <update id="updateArticle" parameterType="guat.lxy.pojo.entity.Article">
+        UPDATE article
+        <set>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="content != null">
+                content = #{content},
+            </if>
+            <!-- categoryId = 0 是「清空分类」的哨兵值，写成 NULL；null 表示本次不改分类 -->
+            <if test="categoryId != null">
+                category_id = <choose><when test="categoryId == 0">NULL</when><otherwise>#{categoryId}</otherwise></choose>,
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="countArticleByCondition" parameterType="guat.lxy.pojo.dto.ArticlePageQueryDTO" resultType="long">
+        SELECT COUNT(*) FROM article
+        <where>
+            <!-- 公开列表默认只看 status=1（已发布），草稿/下架不给陌生人看 -->
+            status = 1
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="author != null and author != ''">
+                AND author = #{author}
+            </if>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectArticlePage" parameterType="guat.lxy.pojo.dto.ArticlePageQueryDTO" resultType="guat.lxy.pojo.entity.Article">
+        SELECT
+        id, title,
+        <!-- 列表不要把 content 全文查出来，省带宽！
+             要么不查 content（点击文章详情再单独查），
+             要么用 SUBSTRING(content, 1, 200) 作为摘要返回 -->
+        author, create_time, update_time, status
+        FROM article
+        <where>
+            status = 1
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="author != null and author != ''">
+                AND author = #{author}
+            </if>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+        </where>
+        ORDER BY
+        <!-- 只允许两个排序字段，防止传奇怪字段 SQL 注入 -->
+        <choose>
+            <when test="sortBy == 'updateTime'"> update_time </when>
+            <otherwise> create_time </otherwise>
+        </choose>
+        <choose>
+            <when test="sortOrder == 'asc'"> ASC </when>
+            <otherwise> DESC </otherwise>
+        </choose>
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countMyArticlePage" resultType="long">
+        SELECT COUNT(*) FROM article
+        <where>
+            <!-- 「我的文章」不强制 status=1：作者自己必须能看到自己的草稿(status=0)、已发布(status=1)、下架等所有状态 -->
+            AND author = #{author}
+            <if test="dto.keyword != null and dto.keyword != ''">
+                AND (title LIKE CONCAT('%', #{dto.keyword}, '%')
+                OR content LIKE CONCAT('%', #{dto.keyword}, '%'))
+            </if>
+            <!-- status / categoryId 为 null 表示不过滤 -->
+            <if test="dto.status != null">AND status = #{dto.status}</if>
+            <if test="dto.categoryId != null">AND category_id = #{dto.categoryId}</if>
+        </where>
+    </select>
+
+    <select id="getArticlePageByUser" resultType="guat.lxy.pojo.entity.Article">
+        SELECT
+        id, title,
+        <!-- 列表不要把 content 全文查出来，省带宽！
+             要么不查 content（点击文章详情再单独查），
+             要么用 SUBSTRING(content, 1, 200) 作为摘要返回 -->
+        author, create_time, update_time, status, category_id
+        FROM article
+        <where>
+            <!-- 「我的文章」不强制 status=1：作者自己必须能看到自己的草稿(status=0)、已发布(status=1)、下架等所有状态 -->
+            AND author = #{author}
+            <if test="dto.keyword != null and dto.keyword != ''">
+                AND (title LIKE CONCAT('%', #{dto.keyword}, '%')
+                OR content LIKE CONCAT('%', #{dto.keyword}, '%'))
+            </if>
+            <!-- status / categoryId 为 null 表示不过滤 -->
+            <if test="dto.status != null">AND status = #{dto.status}</if>
+            <if test="dto.categoryId != null">AND category_id = #{dto.categoryId}</if>
+        </where>
+        ORDER BY
+        <!-- 只允许两个排序字段，防止传奇怪字段 SQL 注入 -->
+        <choose>
+            <when test="dto.sortBy == 'updateTime'"> update_time </when>
+            <otherwise> create_time </otherwise>
+        </choose>
+        <choose>
+            <when test="dto.sortOrder == 'asc'"> ASC </when>
+            <otherwise> DESC </otherwise>
+        </choose>
+        LIMIT #{dto.offset}, #{dto.pageSize}
+    </select>
+
+    <!-- ==================== 个人文章总览统计 ==================== -->
+
+    <!-- 草稿篇数（status = 0） -->
+    <select id="countDraftByAuthor" resultType="long">
+        SELECT COUNT(*) FROM article WHERE author = #{author} AND status = 0
+    </select>
+
+    <!-- 已发布篇数（status = 1） -->
+    <select id="countPublishedByAuthor" resultType="long">
+        SELECT COUNT(*) FROM article WHERE author = #{author} AND status = 1
+    </select>
+
+    <!-- 本周新建篇数：用 MySQL 会话时区计算，避免 Java 与 DB 时区不一致 -->
+    <select id="countWeekNewByAuthor" resultType="long">
+        SELECT COUNT(*) FROM article
+        WHERE author = #{author} AND YEARWEEK(create_time, 1) = YEARWEEK(CURDATE(), 1)
+    </select>
+
+    <!-- 最久没动的草稿躺了多少天；没有草稿时 MAX 返回 NULL -->
+    <select id="getLongestDraftDays" resultType="java.lang.Integer">
+        SELECT MAX(TIMESTAMPDIFF(DAY, update_time, NOW()))
+        FROM article WHERE author = #{author} AND status = 0
+    </select>
+
+    <!-- 最久没动的草稿，最多 3 篇，update_time 升序（最久没动的在前） -->
+    <select id="getStaleDrafts" resultType="guat.lxy.pojo.vo.OverviewArticleVO">
+        SELECT id, title, author, status, create_time, update_time,
+               TIMESTAMPDIFF(DAY, update_time, NOW()) AS days_since_update
+        FROM article
+        WHERE author = #{author} AND status = 0
+        ORDER BY update_time ASC
+        LIMIT 3
+    </select>
+
+    <!-- 最近编辑的文章，最多 5 篇，update_time 降序（status 不限） -->
+    <select id="getRecentArticles" resultType="guat.lxy.pojo.vo.OverviewArticleVO">
+        SELECT id, title, author, status, create_time, update_time,
+               TIMESTAMPDIFF(DAY, update_time, NOW()) AS days_since_update
+        FROM article
+        WHERE author = #{author}
+        ORDER BY update_time DESC
+        LIMIT 5
+    </select>
+
+</mapper>
